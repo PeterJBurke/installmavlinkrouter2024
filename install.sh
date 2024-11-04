@@ -126,8 +126,8 @@ downloadandbuildmavlinkrouter
 configuremavlinkrouter
 
 #enable the mavlink router service and start it
-#sudo systemctl enable mavlink-router
-#sudo systemctl start mavlink-router
+sudo systemctl enable mavlink-router
+sudo systemctl start mavlink-router
 
 date
 
