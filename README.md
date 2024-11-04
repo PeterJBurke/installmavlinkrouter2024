@@ -21,12 +21,17 @@ Follow the instructions here to copy the image to an sd card.
 
 
 Boot Pi with SD.
+ssh into the Pi.
+Run this command and enable serial port:
+```
+sudo raspi-config
+```
+
 
 Get the script to install and configure the Pi:
 ```
 wget https://raw.githubusercontent.com/PeterJBurke/installmavlinkrouter2024/refs/heads/main/install.sh
 ```
-
 Run script (takes about an hour to run):
 ```
 sudo chmod 777 ~/install.sh; 
