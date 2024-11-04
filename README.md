@@ -1,11 +1,8 @@
-# installmavlinkrouter2024
-Installs mavlink router on a raspberry pi. Tested in 2024 on Raspberry Pi Zero W 2 with Bookworm version of Raspbian OS.
-
-
 # Outline
 
 This installs Mavlink-Router.
 It also connects to the flight controller over serial using Mavlink protocol, assuming a UART connection to the flight controller.
+Tested in 2024 on Raspberry Pi Zero W 2 with Bookworm version of Raspbian OS.
 
 ## Target hardware/prerequisites
 
