@@ -11,9 +11,6 @@ Tested in 2024 on Raspberry Pi Zero W 2 with Bookworm version of Raspbian OS.
 * Matek or similar flight controller configured for telemetry at 57,600 baud in Ardupilot
 * UART cable from flight controller to Pi Zero W 2
 
-
-It assumes /home/pi is your home directory.
-
 ## Installing
 
 Download and install Raspbian Bookworm from:
