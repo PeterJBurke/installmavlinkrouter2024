@@ -27,13 +27,13 @@ Boot Pi with SD.
 
 Get the script to install and configure the Pi:
 ```
-wget https://gitlab.com/pjbca/4guav/raw/master/MavlinkRouterBuild/MavlinkRouterBuild.sh
+wget https://raw.githubusercontent.com/PeterJBurke/installmavlinkrouter2024/refs/heads/main/install.sh
 ```
 
 Run script (takes about an hour to run):
 ```
-sudo chmod 777 ~/MavlinkRouterBuild.sh; 
-sudo ~/MavlinkRouterBuild.sh 2>&1 | tee MavlinkRouterBuildlog.txt 
+sudo chmod 777 ~/install.sh; 
+sudo ~/install.sh 2>&1 | tee MavlinkRouterBuildlog.txt 
 ```
 
 
