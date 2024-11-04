@@ -95,7 +95,7 @@ function configuremavlinkrouter {
 
     cd /etc/mavlink-router
     # wget main.conf #  for mavlink-router configuration
-    wget https://gitlab.com/pjbca/4guav/raw/master/MavlinkRouterBuild/main.conf -O /etc/mavlink-router/main.conf
+    wget https://raw.githubusercontent.com/PeterJBurke/installmavlinkrouter2024/refs/heads/main/main.conf -O /etc/mavlink-router/main.conf
     sudo chmod 777 main.conf
     echo "Done configuring mavlink-router..."
 
