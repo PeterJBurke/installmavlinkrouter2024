@@ -22,11 +22,31 @@ function installstuff {
     time sudo apt-get -y install minicom screen
 
     # Enable serial port hardware but disable serial console
-    sudo sed -i 's/console=serial0,115200 //g' /boot/cmdline.txt
-    # Enable UART in config.txt if not already enabled
-    if ! grep -q "^enable_uart=1" /boot/config.txt; then
-        echo "enable_uart=1" | sudo tee -a /boot/config.txt
+    if [ -f /boot/firmware/cmdline.txt ]; then
+        sudo sed -i 's/console=serial0,115200 //g' /boot/firmware/cmdline.txt
+        echo "Updated /boot/firmware/cmdline.txt"
+    elif [ -f /boot/cmdline.txt ]; then
+        sudo sed -i 's/console=serial0,115200 //g' /boot/cmdline.txt
+        echo "Updated /boot/cmdline.txt"
+    else
+        echo "Warning: Neither /boot/firmware/cmdline.txt nor /boot/cmdline.txt found"
     fi
+
+    # Enable UART in config.txt if not already enabled
+    if [ -f /boot/firmware/config.txt ]; then
+        if ! grep -q "^enable_uart=1" /boot/firmware/config.txt; then
+            echo "enable_uart=1" | sudo tee -a /boot/firmware/config.txt
+            echo "Added enable_uart=1 to /boot/firmware/config.txt"
+        fi
+    elif [ -f /boot/config.txt ]; then
+        if ! grep -q "^enable_uart=1" /boot/config.txt; then
+            echo "enable_uart=1" | sudo tee -a /boot/config.txt
+            echo "Added enable_uart=1 to /boot/config.txt"
+        fi
+    else
+        echo "Warning: Neither /boot/firmware/config.txt nor /boot/config.txt found"
+    fi
+
     # Add user to dialout group for serial access
     sudo usermod -a -G dialout $USER
 
