@@ -14,9 +14,19 @@ fi
 echo "System Information:"
 uname -a
 
+echo "\nRaspberry Pi Hardware Info:"
+if [ -f /proc/cpuinfo ]; then
+    echo "=== CPU Info ==="
+    cat /proc/cpuinfo | grep -E 'model|Model'
+    echo "\n=== Hardware ==="
+    cat /proc/cpuinfo | grep Hardware
+    echo "\n=== Revision ==="
+    cat /proc/cpuinfo | grep Revision
+fi
+
 echo "\nChecking and configuring serial port..."
 
-# Determine system configuration paths
+# Force configuration paths for Ubuntu on Raspberry Pi
 CONFIG_FILE="/boot/firmware/config.txt"
 CMDLINE_FILE="/boot/firmware/cmdline.txt"
 
@@ -26,6 +36,9 @@ ls -l /boot/firmware/config.txt /boot/firmware/cmdline.txt /boot/config.txt /boo
 
 echo "\n=== Current TTY Devices ==="
 ls -l /dev/tty* 2>/dev/null | grep -E 'serial|AMA|USB'
+
+echo "\n=== GPIO UART Status ==="
+raspi-gpio get | grep -E "GPIO14|GPIO15" || echo "raspi-gpio not available"
 
 echo "\n=== Current config.txt ==="
 if [ -f "$CONFIG_FILE" ]; then
@@ -59,11 +72,15 @@ if [ -f "$CONFIG_FILE" ]; then
     sed -i '/^dtoverlay=uart/d' "$CONFIG_FILE"
     sed -i '/^dtoverlay=pi3-disable-bt/d' "$CONFIG_FILE"
     sed -i '/^dtoverlay=disable-bt/d' "$CONFIG_FILE"
+    sed -i '/^dtparam=uart0=/d' "$CONFIG_FILE"
+    sed -i '/^dtparam=uart1=/d' "$CONFIG_FILE"
     
     # Add our UART configuration
     echo "" >> "$CONFIG_FILE"
     echo "# UART Configuration" >> "$CONFIG_FILE"
     echo "enable_uart=1" >> "$CONFIG_FILE"
+    echo "dtparam=uart0=on" >> "$CONFIG_FILE"
+    echo "dtparam=uart1=off" >> "$CONFIG_FILE"
     echo "dtoverlay=disable-bt" >> "$CONFIG_FILE"
     
     echo "Updated config.txt with UART settings"
@@ -106,9 +123,17 @@ lsmod | grep -E 'uart|serial|bluetooth'
 echo "\n=== Device Tree Status ==="
 ls -l /proc/device-tree/soc/serial* 2>/dev/null || echo "No serial devices in device tree"
 
+echo "\n=== UART Overlay Status ==="
+ls -l /sys/firmware/devicetree/base/soc/serial* 2>/dev/null || echo "No UART overlays found"
+
+echo "\n=== Debug Output ==="
+dmesg | grep -i "serial"
+dmesg | grep -i "uart"
+
 echo -e "\nConfiguration complete!"
 echo "NOTE: A reboot is required for changes to take effect."
 echo "After reboot, check:"
 echo "1. ls -l /dev/serial0"
 echo "2. ls -l /dev/ttyAMA0"
 echo "3. ls -l /proc/device-tree/soc/serial*"
+echo "4. dmesg | grep -i serial"
