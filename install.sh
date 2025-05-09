@@ -154,4 +154,6 @@ echo "Total of $elapsed seconds elapsed for the entire process"
 
 
 echo "Installation is complete."
-echo "No further action should be required. Closing..."
+echo "A reboot is required to ensure all changes take effect (especially for serial port configuration)."
+echo "Please reboot your system with 'sudo reboot' after this script finishes."
+echo "Closing..."

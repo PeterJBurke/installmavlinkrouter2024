@@ -33,7 +33,10 @@ sudo chmod 777 ~/install.sh;
 sudo ~/install.sh 2>&1 | tee MavlinkRouterBuildlog.txt 
 ```
 
-
+After the installation completes, reboot your system:
+```
+sudo reboot
+```
 
 Done!
 
