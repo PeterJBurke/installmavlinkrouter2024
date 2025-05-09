@@ -42,6 +42,10 @@ Done!
 
 To confirm it works:
 * Connect to flight controller over serial (see schematics) and confirm it connects to the mavproxy router by monitoring it's screen (see below).
+* To test the connection with Mission Planner:
+  1. Make sure your computer is on the same local network as the Raspberry Pi
+  2. In Mission Planner, use `PI_IP_ADDRESS:5678` as the TCP connection address (replace PI_IP_ADDRESS with your Pi's actual IP address)
+  3. Mission Planner should connect to your drone through the MAVLink Router
 
 ## How it works:
 
