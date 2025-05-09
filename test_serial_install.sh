@@ -11,23 +11,35 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-echo "Checking and configuring serial port..."
+echo "System Information:"
+uname -a
+
+echo "\nChecking and configuring serial port..."
 
 # Determine system configuration paths
-if [ -f /boot/firmware/config.txt ]; then
-    CONFIG_FILE="/boot/firmware/config.txt"
-    CMDLINE_FILE="/boot/firmware/cmdline.txt"
+CONFIG_FILE="/boot/firmware/config.txt"
+CMDLINE_FILE="/boot/firmware/cmdline.txt"
+
+echo "1. Diagnostic Information:"
+echo "=== Looking for config files ==="
+ls -l /boot/firmware/config.txt /boot/firmware/cmdline.txt /boot/config.txt /boot/cmdline.txt 2>/dev/null
+
+echo "\n=== Current TTY Devices ==="
+ls -l /dev/tty* 2>/dev/null | grep -E 'serial|AMA|USB'
+
+echo "\n=== Current config.txt ==="
+if [ -f "$CONFIG_FILE" ]; then
+    cat "$CONFIG_FILE"
 else
-    CONFIG_FILE="/boot/config.txt"
-    CMDLINE_FILE="/boot/cmdline.txt"
+    echo "Config file not found at $CONFIG_FILE"
 fi
 
-echo "1. Checking current configuration..."
-echo "=== Current config.txt ==="
-cat "$CONFIG_FILE"
-
 echo "\n=== Current cmdline.txt ==="
-cat "$CMDLINE_FILE"
+if [ -f "$CMDLINE_FILE" ]; then
+    cat "$CMDLINE_FILE"
+else
+    echo "Cmdline file not found at $CMDLINE_FILE"
+fi
 
 echo "\n2. Configuring UART..."
 # First, disable Bluetooth to free up the PL011 UART
@@ -40,6 +52,7 @@ fi
 # Configure UART in config.txt
 if [ -f "$CONFIG_FILE" ]; then
     cp "$CONFIG_FILE" "${CONFIG_FILE}.bak"
+    echo "Created backup at ${CONFIG_FILE}.bak"
     
     # Remove any existing uart-related settings
     sed -i '/^enable_uart=/d' "$CONFIG_FILE"
@@ -53,15 +66,16 @@ if [ -f "$CONFIG_FILE" ]; then
     echo "enable_uart=1" >> "$CONFIG_FILE"
     echo "dtoverlay=disable-bt" >> "$CONFIG_FILE"
     
-    echo "Updated config.txt with UART settings (backup saved as ${CONFIG_FILE}.bak)"
+    echo "Updated config.txt with UART settings"
 fi
 
 # Disable serial console in cmdline.txt
 if [ -f "$CMDLINE_FILE" ]; then
     cp "$CMDLINE_FILE" "${CMDLINE_FILE}.bak"
-    sed -i 's/console=ttyAMA0,[0-9]\+ //' "$CMDLINE_FILE"
-    sed -i 's/console=serial0,[0-9]\+ //' "$CMDLINE_FILE"
-    echo "Updated cmdline.txt (backup saved as ${CMDLINE_FILE}.bak)"
+    echo "Created backup at ${CMDLINE_FILE}.bak"
+    sed -i 's/console=ttyAMA0,[0-9]\+ //g' "$CMDLINE_FILE"
+    sed -i 's/console=serial0,[0-9]\+ //g' "$CMDLINE_FILE"
+    echo "Updated cmdline.txt"
 fi
 
 echo "\n3. Adding user to dialout group..."
@@ -72,19 +86,29 @@ else
     echo "User $SUDO_USER is already in dialout group"
 fi
 
-echo "\n4. Current status:"
+echo "\n4. Final Configuration Status:"
 echo "=== Updated config.txt ==="
-cat "$CONFIG_FILE"
+if [ -f "$CONFIG_FILE" ]; then
+    cat "$CONFIG_FILE"
+fi
 
 echo "\n=== Updated cmdline.txt ==="
-cat "$CMDLINE_FILE"
+if [ -f "$CMDLINE_FILE" ]; then
+    cat "$CMDLINE_FILE"
+fi
 
-echo "\n=== Current serial devices ==="
-ls -l /dev/tty* | grep -E 'serial|AMA|USB' || echo "No serial devices found"
+echo "\n=== Raspberry Pi Model ==="
+cat /proc/cpuinfo | grep Model
 
-echo "\n=== Bluetooth status ==="
-systemctl status bluetooth || echo "Bluetooth service not found"
+echo "\n=== Loaded Kernel Modules ==="
+lsmod | grep -E 'uart|serial|bluetooth'
+
+echo "\n=== Device Tree Status ==="
+ls -l /proc/device-tree/soc/serial* 2>/dev/null || echo "No serial devices in device tree"
 
 echo -e "\nConfiguration complete!"
 echo "NOTE: A reboot is required for changes to take effect."
-echo "After reboot, you can test the serial port using: ls -l /dev/serial0 and ls -l /dev/ttyAMA0"
+echo "After reboot, check:"
+echo "1. ls -l /dev/serial0"
+echo "2. ls -l /dev/ttyAMA0"
+echo "3. ls -l /proc/device-tree/soc/serial*"
