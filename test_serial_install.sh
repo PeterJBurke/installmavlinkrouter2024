@@ -11,36 +11,59 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-echo "Checking current serial port status:"
+echo "Checking and configuring serial port..."
 
-echo "1. Checking for serial device:"
-ls -l /dev/serial* 2>/dev/null || echo "No serial devices found"
-
-echo -e "\n2. Checking if user is in dialout group:"
-groups $SUDO_USER | grep -q dialout
-if [ $? -eq 0 ]; then
-    echo "User $SUDO_USER is in dialout group"
-else
-    echo "Adding user $SUDO_USER to dialout group..."
-    usermod -a -G dialout $SUDO_USER
-    echo "User added to dialout group. This will take effect after next login."
-fi
-
-echo -e "\n3. Checking UART configuration:"
+# Determine system configuration paths
 if [ -f /boot/firmware/config.txt ]; then
     CONFIG_FILE="/boot/firmware/config.txt"
+    CMDLINE_FILE="/boot/firmware/cmdline.txt"
 else
     CONFIG_FILE="/boot/config.txt"
+    CMDLINE_FILE="/boot/cmdline.txt"
 fi
 
+echo "1. Configuring UART in $CONFIG_FILE..."
 if [ -f "$CONFIG_FILE" ]; then
-    if grep -q "^enable_uart=1" "$CONFIG_FILE"; then
-        echo "UART is enabled in $CONFIG_FILE"
+    # Enable UART
+    if ! grep -q "^enable_uart=1" "$CONFIG_FILE"; then
+        echo "enable_uart=1" >> "$CONFIG_FILE"
+        echo "Added enable_uart=1 to $CONFIG_FILE"
     else
-        echo "UART is not enabled in $CONFIG_FILE"
-        echo "To enable UART, add 'enable_uart=1' to $CONFIG_FILE"
+        echo "UART already enabled in $CONFIG_FILE"
+    fi
+    
+    # Add dtoverlay for uart if not present
+    if ! grep -q "^dtoverlay=uart" "$CONFIG_FILE"; then
+        echo "dtoverlay=uart0" >> "$CONFIG_FILE"
+        echo "Added dtoverlay=uart0 to $CONFIG_FILE"
+    else
+        echo "UART dtoverlay already configured"
     fi
 fi
+
+echo "\n2. Configuring cmdline in $CMDLINE_FILE..."
+if [ -f "$CMDLINE_FILE" ]; then
+    sed -i 's/console=serial0,115200 //g' "$CMDLINE_FILE"
+    echo "Removed serial console from $CMDLINE_FILE"
+fi
+
+echo "\n3. Adding user to dialout group..."
+if ! groups $SUDO_USER | grep -q dialout; then
+    usermod -a -G dialout $SUDO_USER
+    echo "Added $SUDO_USER to dialout group (will take effect after next login)"
+else
+    echo "User $SUDO_USER is already in dialout group"
+fi
+
+echo "\n4. Current configuration status:"
+echo "=== Config file ($CONFIG_FILE) ==="
+grep "uart" "$CONFIG_FILE" || echo "No UART configuration found"
+
+echo "\n=== Cmdline file ($CMDLINE_FILE) ==="
+cat "$CMDLINE_FILE" || echo "Could not read cmdline file"
+
+echo "\n=== Serial devices ==="
+ls -l /dev/serial* 2>/dev/null || echo "No serial devices found"
 
 echo -e "\nConfiguration complete!"
 echo "NOTE: A reboot is required for changes to take effect."
