@@ -11,36 +11,36 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-echo "1. Removing serial console from cmdline.txt..."
-if [ -f /boot/firmware/cmdline.txt ]; then
-    sed -i 's/console=serial0,115200 //g' /boot/firmware/cmdline.txt
-    echo "Updated /boot/firmware/cmdline.txt"
+echo "Checking current serial port status:"
+
+echo "1. Checking for serial device:"
+ls -l /dev/serial* 2>/dev/null || echo "No serial devices found"
+
+echo -e "\n2. Checking if user is in dialout group:"
+groups $SUDO_USER | grep -q dialout
+if [ $? -eq 0 ]; then
+    echo "User $SUDO_USER is in dialout group"
 else
-    echo "Warning: /boot/firmware/cmdline.txt not found"
+    echo "Adding user $SUDO_USER to dialout group..."
+    usermod -a -G dialout $SUDO_USER
+    echo "User added to dialout group. This will take effect after next login."
 fi
 
-echo "2. Enabling UART in config.txt..."
+echo -e "\n3. Checking UART configuration:"
 if [ -f /boot/firmware/config.txt ]; then
-    if ! grep -q "^enable_uart=1" /boot/firmware/config.txt; then
-        echo "enable_uart=1" >> /boot/firmware/config.txt
-        echo "Added enable_uart=1 to config.txt"
-    else
-        echo "UART already enabled in config.txt"
-    fi
+    CONFIG_FILE="/boot/firmware/config.txt"
 else
-    echo "Warning: /boot/firmware/config.txt not found"
+    CONFIG_FILE="/boot/config.txt"
 fi
 
-echo "3. Adding current user to dialout group..."
-usermod -a -G dialout $SUDO_USER
-
-echo "4. Verifying changes..."
-echo "Contents of /boot/firmware/cmdline.txt:"
-cat /boot/firmware/cmdline.txt
-echo -e "\nChecking for enable_uart in /boot/firmware/config.txt:"
-grep "enable_uart" /boot/firmware/config.txt
-echo -e "\nChecking dialout group membership:"
-groups $SUDO_USER | grep dialout
+if [ -f "$CONFIG_FILE" ]; then
+    if grep -q "^enable_uart=1" "$CONFIG_FILE"; then
+        echo "UART is enabled in $CONFIG_FILE"
+    else
+        echo "UART is not enabled in $CONFIG_FILE"
+        echo "To enable UART, add 'enable_uart=1' to $CONFIG_FILE"
+    fi
+fi
 
 echo -e "\nConfiguration complete!"
 echo "NOTE: A reboot is required for changes to take effect."
