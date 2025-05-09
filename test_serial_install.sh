@@ -12,24 +12,33 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 echo "1. Removing serial console from cmdline.txt..."
-sed -i 's/console=serial0,115200 //g' /boot/cmdline.txt
+if [ -f /boot/firmware/cmdline.txt ]; then
+    sed -i 's/console=serial0,115200 //g' /boot/firmware/cmdline.txt
+    echo "Updated /boot/firmware/cmdline.txt"
+else
+    echo "Warning: /boot/firmware/cmdline.txt not found"
+fi
 
 echo "2. Enabling UART in config.txt..."
-if ! grep -q "^enable_uart=1" /boot/config.txt; then
-    echo "enable_uart=1" >> /boot/config.txt
-    echo "Added enable_uart=1 to config.txt"
+if [ -f /boot/firmware/config.txt ]; then
+    if ! grep -q "^enable_uart=1" /boot/firmware/config.txt; then
+        echo "enable_uart=1" >> /boot/firmware/config.txt
+        echo "Added enable_uart=1 to config.txt"
+    else
+        echo "UART already enabled in config.txt"
+    fi
 else
-    echo "UART already enabled in config.txt"
+    echo "Warning: /boot/firmware/config.txt not found"
 fi
 
 echo "3. Adding current user to dialout group..."
 usermod -a -G dialout $SUDO_USER
 
 echo "4. Verifying changes..."
-echo "Contents of /boot/cmdline.txt:"
-cat /boot/cmdline.txt
-echo -e "\nChecking for enable_uart in /boot/config.txt:"
-grep "enable_uart" /boot/config.txt
+echo "Contents of /boot/firmware/cmdline.txt:"
+cat /boot/firmware/cmdline.txt
+echo -e "\nChecking for enable_uart in /boot/firmware/config.txt:"
+grep "enable_uart" /boot/firmware/config.txt
 echo -e "\nChecking dialout group membership:"
 groups $SUDO_USER | grep dialout
 
