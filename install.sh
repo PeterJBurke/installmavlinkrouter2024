@@ -38,11 +38,21 @@ function installstuff {
 }
 
 function downloadandbuildmavlinkrouter {
+    # Check if mavlink-router is already installed
+    if command -v mavlink-routerd &> /dev/null && systemctl is-enabled mavlink-router &> /dev/null; then
+        echo "MAVLink Router is already installed and service is configured."
+        echo "Skipping download and build to save time."
+        echo "If you want to force a reinstall, please remove mavlink-routerd and disable the service first."
+        return 0
+    fi
 
     start_time_downloadandbuildmavlinkrouter="$(date -u +%s)"
     echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
     echo "Downloading git clone of mavlink-router..."
     #Download the git clone:                                                                                        
+
+    # Remove existing directory if it exists
+    [ -d "mavlink-router" ] && rm -rf mavlink-router
 
     git clone https://github.com/intel/mavlink-router.git
     cd mavlink-router

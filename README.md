@@ -27,7 +27,7 @@ Get the script to install and configure the Pi:
 ```
 wget https://raw.githubusercontent.com/PeterJBurke/installmavlinkrouter2024/refs/heads/main/install.sh
 ```
-Run script (takes about 10-15 minutes to run on a Pi Zero 2 W):
+Run script (takes about 10-15 minutes to run on a Pi Zero 2 W, or less than a minute if MAVLink Router is already installed):
 ```
 sudo chmod 777 ~/install.sh; 
 sudo ~/install.sh 2>&1 | tee MavlinkRouterBuildlog.txt 
@@ -42,7 +42,9 @@ To confirm it works:
 
 ## How it works:
 
-The script installs required packages using apt-get install, including:
+The script first checks if MAVLink Router is already installed. If it is, it will skip the download and compilation steps to save time.
+
+If not already installed, the script installs required packages using apt-get install, including:
 * Basic development tools (git, gcc, etc.)
 * Serial support packages (raspi-config, minicom, screen)
 * MAVLink router dependencies
