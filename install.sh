@@ -6,56 +6,61 @@
 
 
 function installstuff {
-    echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-    echo "Installing a whole bunch of packages..."
+    echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+    echo "Installing packages and configuring serial port..."
 
     start_time_installstuff="$(date -u +%s)"
   
     echo "export PROMPT_COMMAND='history -a'" | sudo tee -a /etc/bash.bashrc
-    time sudo apt-get -y update # 1 min   #Update the list of packages in the software center                                   
-    time sudo apt-get -y full-upgrade # 3.5 min
-    # time sudo apt-get -y install screen # 0.5 min
-    time sudo apt-get -y install git # 0 min
+    time sudo apt-get -y update
     time sudo apt-get -y install git meson ninja-build pkg-config gcc g++ systemd
-    # Install serial support packages
-    time sudo apt-get -y install raspi-config
-    time sudo apt-get -y install minicom screen
 
-    # Enable serial port hardware but disable serial console
-    if [ -f /boot/firmware/cmdline.txt ]; then
-        sudo sed -i 's/console=serial0,115200 //g' /boot/firmware/cmdline.txt
-        echo "Updated /boot/firmware/cmdline.txt"
-    elif [ -f /boot/cmdline.txt ]; then
-        sudo sed -i 's/console=serial0,115200 //g' /boot/cmdline.txt
-        echo "Updated /boot/cmdline.txt"
-    else
-        echo "Warning: Neither /boot/firmware/cmdline.txt nor /boot/cmdline.txt found"
+    # Set configuration paths for Ubuntu on Raspberry Pi
+    CONFIG_FILE="/boot/firmware/config.txt"
+    CMDLINE_FILE="/boot/firmware/cmdline.txt"
+
+    echo "Configuring serial port..."
+    # Configure UART in config.txt
+    if [ -f "$CONFIG_FILE" ]; then
+        cp "$CONFIG_FILE" "${CONFIG_FILE}.bak"
+        
+        # Remove existing uart settings
+        sed -i '/^enable_uart=/d' "$CONFIG_FILE"
+        sed -i '/^dtoverlay=uart/d' "$CONFIG_FILE"
+        sed -i '/^dtoverlay=pi3-disable-bt/d' "$CONFIG_FILE"
+        sed -i '/^dtoverlay=disable-bt/d' "$CONFIG_FILE"
+        sed -i '/^dtparam=uart0=/d' "$CONFIG_FILE"
+        sed -i '/^dtparam=uart1=/d' "$CONFIG_FILE"
+        
+        # Add UART configuration
+        echo "" >> "$CONFIG_FILE"
+        echo "# UART Configuration" >> "$CONFIG_FILE"
+        echo "enable_uart=1" >> "$CONFIG_FILE"
+        echo "dtparam=uart0=on" >> "$CONFIG_FILE"
+        echo "dtparam=uart1=off" >> "$CONFIG_FILE"
+        echo "dtoverlay=disable-bt" >> "$CONFIG_FILE"
+        echo "Updated config.txt with UART settings (backup saved)"
     fi
 
-    # Enable UART in config.txt if not already enabled
-    if [ -f /boot/firmware/config.txt ]; then
-        if ! grep -q "^enable_uart=1" /boot/firmware/config.txt; then
-            echo "enable_uart=1" | sudo tee -a /boot/firmware/config.txt
-            echo "Added enable_uart=1 to /boot/firmware/config.txt"
-        fi
-    elif [ -f /boot/config.txt ]; then
-        if ! grep -q "^enable_uart=1" /boot/config.txt; then
-            echo "enable_uart=1" | sudo tee -a /boot/config.txt
-            echo "Added enable_uart=1 to /boot/config.txt"
-        fi
-    else
-        echo "Warning: Neither /boot/firmware/config.txt nor /boot/config.txt found"
+    # Remove serial console from cmdline.txt
+    if [ -f "$CMDLINE_FILE" ]; then
+        cp "$CMDLINE_FILE" "${CMDLINE_FILE}.bak"
+        sed -i 's/console=ttyAMA0,[0-9]\+ //g' "$CMDLINE_FILE"
+        sed -i 's/console=serial0,[0-9]\+ //g' "$CMDLINE_FILE"
+        echo "Updated cmdline.txt (backup saved)"
     fi
 
-    # Add user to dialout group for serial access
-    sudo usermod -a -G dialout $USER
+    # Add user to dialout group
+    if ! groups $SUDO_USER | grep -q dialout; then
+        usermod -a -G dialout $SUDO_USER
+        echo "Added $SUDO_USER to dialout group (will take effect after next login)"
+    fi
 
-    echo "Done installing a whole bunch of packages..."
-
+    echo "Serial port configuration complete. Reboot required for changes to take effect."
 
     end_time_installstuff="$(date -u +%s)"
     elapsed_installstuff="$(($end_time_installstuff-$start_time_installstuff))"
-    echo "Total of $elapsed_installstuff seconds elapsed for installing packages"
+    echo "Total of $elapsed_installstuff seconds elapsed for installation and configuration"
     # 38 mins
     
     
