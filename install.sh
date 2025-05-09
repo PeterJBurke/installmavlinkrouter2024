@@ -17,8 +17,14 @@ function installstuff {
     # time sudo apt-get -y install screen # 0.5 min
     time sudo apt-get -y install git # 0 min
     time sudo apt-get -y install git meson ninja-build pkg-config gcc g++ systemd
+    # Install serial support packages
+    time sudo apt-get -y install raspi-config
+    time sudo apt-get -y install minicom screen
 
-   
+    # Enable serial port
+    sudo raspi-config nonint do_serial 2  # Enable serial port but disable serial console
+    # Add user to dialout group for serial access
+    sudo usermod -a -G dialout $USER
 
     echo "Done installing a whole bunch of packages..."
 

@@ -20,12 +20,7 @@ https://www.raspberrypi.org/downloads/raspbian/
 Follow the instructions here to copy the image to an sd card.
 
 
-Boot Pi with SD.
-ssh into the Pi.
-Run this command and enable serial port:
-```
-sudo raspi-config
-```
+Boot Pi with SD and ssh into the Pi.
 
 
 Get the script to install and configure the Pi:
@@ -47,7 +42,15 @@ To confirm it works:
 
 ## How it works:
 
-The script installs a whole bunch of packages using apt-get install.
+The script installs required packages using apt-get install, including:
+* Basic development tools (git, gcc, etc.)
+* Serial support packages (raspi-config, minicom, screen)
+* MAVLink router dependencies
+
+During installation, the script will:
+* Automatically enable the serial port
+* Disable serial console (to free up the port for MAVLink)
+* Add the user to the dialout group for serial port access
 
 It downloads mavlink-router source code from git hub, compiles it. (Version 2.0)
 
