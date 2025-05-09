@@ -21,8 +21,12 @@ function installstuff {
     time sudo apt-get -y install raspi-config
     time sudo apt-get -y install minicom screen
 
-    # Enable serial port
-    sudo raspi-config nonint do_serial 2  # Enable serial port but disable serial console
+    # Enable serial port hardware but disable serial console
+    sudo sed -i 's/console=serial0,115200 //g' /boot/cmdline.txt
+    # Enable UART in config.txt if not already enabled
+    if ! grep -q "^enable_uart=1" /boot/config.txt; then
+        echo "enable_uart=1" | sudo tee -a /boot/config.txt
+    fi
     # Add user to dialout group for serial access
     sudo usermod -a -G dialout $USER
 
