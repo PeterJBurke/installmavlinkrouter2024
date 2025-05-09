@@ -42,13 +42,43 @@ Done!
 
 ## Testing Your Installation
 
-### How to Check it Works on Command Line
-* Connect to flight controller over serial (see schematics) and confirm it connects to the mavproxy router by monitoring its screen (see commands below)
+### 1. Checking Service Status
+First, verify that the MAVLink Router service is running properly:
 
-### How to Test it from Mission Planner
+Check service status:
+```
+systemctl status mavlink-router
+```
+
+View service logs:
+```
+journalctl -u mavlink-router
+```
+
+Monitor logs in real-time:
+```
+journalctl -u mavlink-router -f
+```
+
+### 2. Testing with Command Line
+You can test the connection manually using mavproxy:
+```
+sudo -s mavproxy.py --master=/dev/Serial0 --baudrate 57600
+```
+
+Or directly invoke mavlink-router:
+```
+mavlink-routerd
+```
+
+### 3. Testing with Mission Planner
 1. Make sure your computer is on the same local network as the Raspberry Pi
 2. In Mission Planner, use `PI_IP_ADDRESS:5678` as the TCP connection address (replace PI_IP_ADDRESS with your Pi's actual IP address)
 3. Mission Planner should connect to your drone through the MAVLink Router
+
+### 4. Verifying Configuration Files
+Check that these configuration files were created properly:
+* `/etc/mavlink-router/main.conf` - Contains port settings (UART via /dev/Serial0 and TCP on localhost:5678)
 
 ## How it works:
 
@@ -71,54 +101,9 @@ mavlink-router is what it says: it passes mavlink packets from one place to anot
 It downloads these files file (from this repo) for automatically running mavlink-router and the ssh:
 * /etc/main.conf has the parameters for the ports (connects to flight controller on UART via /dev/Serial0 and opens Mavlink stream on TCP localhost:5678)
 
-## How to test it:
-
-### How to check the status of mavlink-router service:
-Check status of the service:
-```
-systemctl status mavlink-router
-```
-
-Check logs of the service:
-```
-journalctl -u mavlink-router
-```
-
-Check logs of the service with end updated dyamically:
-```
-journalctl -u mavlink-router -f
-```
-
-
-### Manual testing:
-
-Test connection manually to UAV with mavproxy:
-```
-sudo -s mavproxy.py --master=/dev/Serial0 --baudrate 57600
-```
-
-
-To manually invoke mavlink-router:
-
-```
-cd ~/mavlink-router
-/.mavlink-routerd # (will use main.conf file)
-```
-or
-```
-mavlink-routerd
-```
-
-### Check all the configuration files:
-The following configuration files are created/modified during the build. You can check to see if they were created properly with the correct content:
-
-* /home/pi/MavlinkRouterBuild.sh
-* /etc/mavlink-router/main.conf has the parameters for the ports (connects to flight controller on UART via /dev/AMA0 and opens Mavlink stream on TCP localhost:5678)
-* 
-
 ## Authors
 
-* **Peter Burke** - *Initial work* - 
+* **Peter Burke** - *Initial work*
 
 ## License
 
@@ -126,4 +111,4 @@ This project is licensed under the GNU License - see the [LICENSE.txt](LICENSE.t
 
 ## Acknowledgments
 
- * Thanks to the developers of mavlink-router and Ardupilot.
+* Thanks to the developers of mavlink-router and Ardupilot.
