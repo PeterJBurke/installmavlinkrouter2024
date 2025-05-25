@@ -25,7 +25,7 @@ Boot Pi with SD and ssh into the Pi.
 
 Get the script to install and configure the Pi:
 ```
-wget https://raw.githubusercontent.com/PeterJBurke/installmavlinkrouter2024/refs/heads/main/install.sh
+wget -O install.sh https://raw.githubusercontent.com/PeterJBurke/installmavlinkrouter2024/refs/heads/main/install.sh
 ```
 Run script (takes about 10-15 minutes to run on a Pi Zero 2 W, or less than a minute if MAVLink Router is already installed):
 ```
