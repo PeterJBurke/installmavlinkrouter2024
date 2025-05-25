@@ -2,6 +2,12 @@
 
 # Copyright Peter Burke 11/3/2024
 
+# Check if mavlink-routerd is already installed
+if [ -x /usr/local/bin/mavlink-routerd ] || command -v mavlink-routerd >/dev/null 2>&1; then
+    echo "mavlink-routerd is already installed. Skipping installation."
+    exit 0
+fi
+
 # Function to check if the system can use the pre-compiled binary
 check_architecture() {
     local arch
