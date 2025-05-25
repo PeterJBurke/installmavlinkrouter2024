@@ -2,8 +2,77 @@
 
 # Copyright Peter Burke 11/3/2024
 
-# define functions first
+# Function to check if the system can use the pre-compiled binary
+check_architecture() {
+    local arch
+    arch=$(uname -m)
+    
+    # Check if the system is 64-bit ARM (aarch64)
+    if [ "$arch" = "aarch64" ]; then
+        # Check if we're running on a Raspberry Pi
+        if grep -q "Raspberry Pi" /proc/device-tree/model 2>/dev/null; then
+            echo "aarch64"
+            return 0
+        fi
+    fi
+    
+    echo "unsupported"
+    return 1
+}
 
+# Function to download and install the pre-compiled binary
+install_precompiled() {
+    local arch=$1
+    local version="main"  # Using main branch for now, change to tag when you create a release
+    
+    echo "Downloading pre-compiled binary for $arch..."
+    
+    # Create installation directory
+    sudo mkdir -p /usr/local/bin
+    sudo mkdir -p /etc/mavlink-router
+    
+    # Download the binary from the bin directory in the repo
+    local repo_url="https://raw.githubusercontent.com/PeterJBurke/installmavlinkrouter2024"
+    local binary_url="$repo_url/$version/bin/raspberrypi-$arch/mavlink-routerd"
+    
+    if ! curl -L -o /tmp/mavlink-routerd "$binary_url"; then
+        echo "Failed to download pre-compiled binary. Falling back to compilation."
+        return 1
+    fi
+    
+    # Install the binary
+    sudo install -m 755 /tmp/mavlink-routerd /usr/local/bin/
+    rm -f /tmp/mavlink-routerd
+    
+    echo "Successfully installed pre-compiled mavlink-routerd"
+    return 0
+}
+
+# Function to build from source
+build_from_source() {
+    echo "Building mavlink-router from source..."
+    
+    # Install build dependencies
+    sudo apt-get update
+    sudo apt-get install -y git meson ninja-build pkg-config gcc g++
+    
+    # Clone and build
+    local temp_dir
+    temp_dir=$(mktemp -d)
+    cd "$temp_dir" || exit 1
+    
+    git clone https://github.com/intel/mavlink-router.git
+    cd mavlink-router
+    git submodule update --init --recursive
+    
+    meson setup build .
+    ninja -C build
+    sudo ninja -C build install
+    
+    # Clean up
+    cd /tmp || exit 1
+    rm -rf "$temp_dir"
+}
 
 function installstuff {
     echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -13,7 +82,7 @@ function installstuff {
   
     echo "export PROMPT_COMMAND='history -a'" | sudo tee -a /etc/bash.bashrc
     time sudo apt-get -y update
-    time sudo apt-get -y install git meson ninja-build pkg-config gcc g++ systemd
+    time sudo apt-get -y install git meson ninja-build pkg-config gcc g++ systemd curl
 
     # Set configuration paths for Ubuntu on Raspberry Pi
     CONFIG_FILE="/boot/firmware/config.txt"
@@ -77,26 +146,25 @@ function downloadandbuildmavlinkrouter {
 
     start_time_downloadandbuildmavlinkrouter="$(date -u +%s)"
     echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-    echo "Downloading git clone of mavlink-router..."
-    #Download the git clone:                                                                                        
+    
+    # Check architecture
+    local arch
+    arch=$(check_architecture)
+    
+    # Try to install pre-compiled binary if architecture is supported
+    if [ "$arch" != "unsupported" ]; then
+        echo "Detected compatible architecture: $arch"
+        if install_precompiled "$arch"; then
+            echo "Successfully installed pre-compiled binary for $arch"
+            return 0
+        fi
+        echo "Falling back to source compilation..."
+    else
+        echo "No pre-compiled binary available for this architecture. Compiling from source..."
+    fi
 
-    # Remove existing directory if it exists
-    [ -d "mavlink-router" ] && rm -rf mavlink-router
-
-    git clone https://github.com/intel/mavlink-router.git
-    cd mavlink-router
-    sudo git submodule update --init --recursive
-
-    echo "Done downloading git clone of mavlink-router..."
-
-    echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-    echo "Start making / compiling / building mavlink-router..."
-    meson setup build .
-
-
-    #Make it                                                                                                        
-    ninja -j 1 -C build
-    sudo ninja -C build install
+    # Fall back to building from source
+    build_from_source
     
     echo "Done making / compiling / building mavlink-router..."
 
