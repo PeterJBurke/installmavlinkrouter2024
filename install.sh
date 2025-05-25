@@ -44,8 +44,37 @@ install_precompiled() {
     sudo install -m 755 /tmp/mavlink-routerd /usr/local/bin/
     rm -f /tmp/mavlink-routerd
     
-    echo "Successfully installed pre-compiled mavlink-routerd"
+    # Create systemd service
+    create_systemd_service
+    
+    echo "Successfully installed pre-compiled mavlink-routerd and created systemd service"
     return 0
+}
+
+# Function to create systemd service for mavlink-router
+create_systemd_service() {
+    echo "Creating systemd service for mavlink-router..."
+    
+    # Create the service file
+    cat << EOF | sudo tee /etc/systemd/system/mavlink-router.service > /dev/null
+[Unit]
+Description=MAVLink Router
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/mavlink-routerd -c /etc/mavlink-router/main.conf
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Reload systemd to recognize the new service
+    sudo systemctl daemon-reload
+    
+    echo "Systemd service created and daemon reloaded"
 }
 
 # Function to build from source
@@ -68,6 +97,9 @@ build_from_source() {
     meson setup build .
     ninja -C build
     sudo ninja -C build install
+    
+    # Create systemd service
+    create_systemd_service
     
     # Clean up
     cd /tmp || exit 1
