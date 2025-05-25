@@ -44,10 +44,17 @@ install_precompiled() {
     sudo install -m 755 /tmp/mavlink-routerd /usr/local/bin/
     rm -f /tmp/mavlink-routerd
     
+    # Download latest main.conf from repo
+    local conf_url="https://raw.githubusercontent.com/PeterJBurke/installmavlinkrouter2024/main/main.conf"
+    sudo mkdir -p /etc/mavlink-router
+    curl -L -o /tmp/main.conf "$conf_url"
+    sudo install -m 644 /tmp/main.conf /etc/mavlink-router/main.conf
+    rm -f /tmp/main.conf
+
     # Create systemd service
     create_systemd_service
     
-    echo "Successfully installed pre-compiled mavlink-routerd and created systemd service"
+    echo "Successfully installed pre-compiled mavlink-routerd, main.conf, and created systemd service"
     return 0
 }
 
@@ -98,6 +105,13 @@ build_from_source() {
     ninja -C build
     sudo ninja -C build install
     
+    # Download latest main.conf from repo
+    local conf_url="https://raw.githubusercontent.com/PeterJBurke/installmavlinkrouter2024/main/main.conf"
+    sudo mkdir -p /etc/mavlink-router
+    curl -L -o /tmp/main.conf "$conf_url"
+    sudo install -m 644 /tmp/main.conf /etc/mavlink-router/main.conf
+    rm -f /tmp/main.conf
+
     # Create systemd service
     create_systemd_service
     
