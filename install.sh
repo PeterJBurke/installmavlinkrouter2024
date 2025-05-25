@@ -294,6 +294,9 @@ fi
 
 configuremavlinkrouter
 
+# Always create (or refresh) the systemd service before enabling/starting
+create_systemd_service
+
 # Enable the mavlink-router service and start it
 sudo systemctl enable mavlink-router
 sudo systemctl start mavlink-router
