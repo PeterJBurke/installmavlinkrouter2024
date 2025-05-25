@@ -3,9 +3,10 @@
 # Copyright Peter Burke 11/3/2024
 
 # Check if mavlink-routerd is already installed
+MAVLINK_ROUTER_INSTALLED=0
 if [ -x /usr/local/bin/mavlink-routerd ] || command -v mavlink-routerd >/dev/null 2>&1; then
-    echo "mavlink-routerd is already installed. Skipping installation."
-    exit 0
+    echo "mavlink-routerd is already installed. Skipping binary installation."
+    MAVLINK_ROUTER_INSTALLED=1
 fi
 
 # Function to check if the system can use the pre-compiled binary
@@ -284,13 +285,16 @@ date
 
 start_time="$(date -u +%s)"
 
-installstuff
+if [ "$MAVLINK_ROUTER_INSTALLED" -eq 0 ]; then
+    installstuff
+    downloadandbuildmavlinkrouter
+else
+    echo "Skipping binary installation steps."
+fi
 
-downloadandbuildmavlinkrouter
-                                                            
 configuremavlinkrouter
 
-#enable the mavlink router service and start it
+# Enable the mavlink-router service and start it
 sudo systemctl enable mavlink-router
 sudo systemctl start mavlink-router
 
